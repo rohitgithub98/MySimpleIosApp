@@ -4,12 +4,12 @@ platform :ios do
   desc "Run Unit Tests"
   lane :test do
     scan(
-      scheme: "MySimpleIosApp",
-      devices: ["iPhone 16"],
-      clean: true,
-      skip_detect_devices: true,  # Prevents issues if no real devices are connected
-      fail_build: true            # Ensures Jenkins fails if tests fail
-    )
+  scheme: "MySimpleIosApp",
+  devices: ["iPhone 16"],
+  destination: "platform=iOS Simulator,id=7D41B4B1-2119-48A5-9F5D-FC4334F2BD51",
+  fail_build: true
+)
+
   end
 
   desc "Build the iOS app"
