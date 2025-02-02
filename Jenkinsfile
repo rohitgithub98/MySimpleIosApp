@@ -5,7 +5,6 @@ pipeline {
         APP_SCHEME = "MySimpleIosApp"
         APP_PROJECT = "MySimpleIosApp.xcodeproj"
         SIMULATOR_ID = "7D41B4B1-2119-48A5-9F5D-FC4334F2BD51"
-        GEM_HOME = "$HOME/.gem/ruby/3.4.0" // User-level gem installation
     }
 
     stages {
@@ -15,31 +14,42 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Setup Environment & Install Dependencies') {
             steps {
                 sh '''
                 set -e
+                echo "📌 Setting up Ruby & Bundler"
                 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-                export PATH="$HOME/.gem/ruby/3.4.0/bin:$PATH"
 
-                echo "📌 Checking Ruby & Bundler"
+                echo "📌 Checking Ruby version"
                 ruby -v
-                which ruby
-                which bundler
 
-                echo "📌 Ensuring correct Fastlane & dependencies"
-                gem install bundler --force --silent
-                gem uninstall fastlane -a -x || true
-                gem install fastlane -v 2.215.0 --no-document --silent
-                gem install abbrev mutex_m highline commander --silent
+                echo "📌 Installing Bundler"
+                gem install bundler --no-document || true
 
-                echo "📌 Installing Bundler dependencies"
-                bundle config set path 'vendor/bundle'
+                echo "📌 Checking Fastlane"
+                if ! command -v fastlane &> /dev/null
+                then
+                    echo "📌 Fastlane not found, installing..."
+                    gem install fastlane -v 2.215.0 --no-document
+                else
+                    echo "✅ Fastlane already installed"
+                fi
+
+                echo "📌 Installing dependencies"
                 bundle install
 
-                echo "📌 Ensuring CocoaPods is installed"
-                gem install --user-install cocoapods
-                pod install
+                echo "📌 Checking CocoaPods"
+                if ! command -v pod &> /dev/null
+                then
+                    echo "📌 CocoaPods not found, installing..."
+                    gem install cocoapods --no-document
+                else
+                    echo "✅ CocoaPods already installed"
+                fi
+                
+                echo "📌 Running pod install"
+                pod install || true
                 '''
             }
         }
@@ -47,15 +57,10 @@ pipeline {
         stage('Boot Simulator') {
             steps {
                 sh '''
-                set -e
-                echo "📌 Shutting down targeted simulator if running"
-                xcrun simctl shutdown ${SIMULATOR_ID} || true
-
-                echo "📌 Booting iOS Simulator"
+                echo "📌 Shutting down and booting iOS Simulator"
+                xcrun simctl shutdown all || true
                 xcrun simctl boot ${SIMULATOR_ID}
-
-                echo "📌 Verifying running Simulators"
-                xcrun simctl list | grep "Booted"
+                xcrun simctl list | grep Booted
                 '''
             }
         }
@@ -63,12 +68,8 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 sh '''
-                set -e
-                export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-                export PATH="$HOME/.gem/ruby/3.4.0/bin:$PATH"
-
                 echo "📌 Running Fastlane Unit Tests"
-                bundle exec fastlane test
+                bundle exec fastlane test || exit 1
                 '''
             }
         }
@@ -76,12 +77,8 @@ pipeline {
         stage('Build iOS App') {
             steps {
                 sh '''
-                set -e
-                export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-                export PATH="$HOME/.gem/ruby/3.4.0/bin:$PATH"
-
                 echo "📌 Building iOS App"
-                bundle exec fastlane build
+                bundle exec fastlane build || exit 1
                 '''
             }
         }
@@ -89,10 +86,10 @@ pipeline {
         stage('Archive Artifacts') {
             steps {
                 sh '''
-                echo "📌 Archiving Build Artifacts"
+                echo "📌 Archiving build artifacts"
                 mkdir -p build
                 '''
-                archiveArtifacts artifacts: 'build/MySimpleIosApp.ipa', fingerprint: true
+                archiveArtifacts artifacts: 'build/*.ipa', fingerprint: true
             }
         }
     }
@@ -103,10 +100,6 @@ pipeline {
         }
         failure {
             echo "❌ Build Failed! Check logs for details."
-            sh '''
-            echo "📌 Fetching Last 50 Jenkins Logs"
-            tail -n 50 ${WORKSPACE}/logs/* || true
-            '''
         }
     }
 }
