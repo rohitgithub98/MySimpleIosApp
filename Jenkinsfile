@@ -66,13 +66,23 @@ pipeline {
         }
 
         stage('Run Unit Tests') {
-            steps {
-                sh '''
-                echo "📌 Running Fastlane Unit Tests"
-                bundle exec fastlane test || exit 1
-                '''
-            }
-        }
+    steps {
+        sh '''
+        echo "📌 Ensuring Jenkins uses correct Ruby version"
+        export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+        export GEM_HOME="$HOME/.gem"
+        export PATH="$GEM_HOME/bin:$PATH"
+        
+        echo "📌 Checking Bundler version"
+        gem install bundler:2.6.2 --no-document || true
+        bundle update --bundler
+        
+        echo "📌 Running Fastlane Unit Tests"
+        bundle exec fastlane test || exit 1
+        '''
+    }
+}
+
 
         stage('Build iOS App') {
             steps {
