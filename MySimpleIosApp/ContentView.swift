@@ -1,24 +1,35 @@
-//
-//  ContentView.swift
-//  MySimpleIosApp
-//
-//  Created by Vijay Raghavan on 02/02/25.
-//
+import SwiftUI
 
 import SwiftUI
 
 struct ContentView: View {
+    @State private var text = "Hello, DevOps!"
+
+    var textValue: String { text }  // ✅ Public getter for testing
+
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Text(text)
+                .font(.title)
+                .padding()
+
+            Button(action: {
+                text = "Button Clicked!"
+            }) {
+                Text("Click Me")
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
         }
-        .padding()
     }
 }
 
-#Preview {
-    ContentView()
+
+// Preview for Xcode UI rendering
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }

@@ -18,16 +18,18 @@ final class MySimpleIosAppUITestsLaunchTests: XCTestCase {
     }
 
     @MainActor
-    func testLaunch() throws {
+    func testLaunch() {
         let app = XCUIApplication()
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
+        // Wait for the main UI to appear
+        let button = app.buttons["Click Me"]
+        let exists = NSPredicate(format: "exists == 1")
 
-        let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Launch Screen"
-        attachment.lifetime = .keepAlways
-        add(attachment)
+        expectation(for: exists, evaluatedWith: button, handler: nil)
+        waitForExpectations(timeout: 5, handler: nil)  // ✅ Wait up to 5 seconds
+
+        XCTAssertTrue(button.exists, "App should launch and display UI.")
     }
+
 }
