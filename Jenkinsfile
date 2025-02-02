@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'dev', url: 'https://github.com/your-repo/MySimpleIosApp.git'
+                git branch: 'dev', url: 'https://github.com/rohitgithub98/MySimpleIosApp.git'
             }
         }
 
