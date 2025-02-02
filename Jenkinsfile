@@ -4,6 +4,7 @@ pipeline {
     environment {
         APP_SCHEME = "MySimpleIosApp"
         APP_PROJECT = "MySimpleIosApp.xcodeproj"
+        SIMULATOR_ID = "7D41B4B1-2119-48A5-9F5D-FC4334F2BD51"  // Ensure simulator UDID is set correctly
     }
 
     stages {
@@ -15,26 +16,49 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'bundle install || true'
-                sh 'pod install || true'
+                sh '''
+                export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+                ruby -v
+                which ruby
+                which bundler
+                gem install bundler --force
+                bundle install
+                pod install
+                '''
+            }
+        }
+
+        stage('Boot Simulator') {
+            steps {
+                sh '''
+                xcrun simctl shutdown all
+                xcrun simctl boot ${SIMULATOR_ID}
+                xcrun simctl list | grep "Booted"
+                '''
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                sh 'fastlane test'
+                sh '''
+                export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+                bundle exec fastlane test
+                '''
             }
         }
 
         stage('Build iOS App') {
             steps {
-                sh 'fastlane build'
+                sh '''
+                export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+                bundle exec fastlane build
+                '''
             }
         }
 
         stage('Archive Artifacts') {
             steps {
-                sh 'mkdir -p build' //Ensure folder exists
+                sh 'mkdir -p build' // Ensure the folder exists
                 archiveArtifacts artifacts: 'build/MySimpleIosApp.ipa', fingerprint: true
             }
         }
@@ -46,8 +70,10 @@ pipeline {
         }
         failure {
             echo "❌ Build Failed! Check logs for details."
-            sh 'tail -n 50 ~/Library/Logs/Jenkins.log' //Print the last 50 lines of Jenkins logs
+            sh '''
+            tail -n 50 /Users/vijayraghavan/.jenkins/logs/*
+            xcrun simctl list | grep "Booted"
+            '''
         }
     }
 }
-
