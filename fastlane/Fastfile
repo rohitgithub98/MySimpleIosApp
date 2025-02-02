@@ -5,7 +5,10 @@ platform :ios do
   lane :test do
     scan(
       scheme: "MySimpleIosApp",
-      devices: ["iPhone 16"]
+      devices: ["iPhone 16"],
+      clean: true,
+      skip_detect_devices: true,  # Prevents issues if no real devices are connected
+      fail_build: true            # Ensures Jenkins fails if tests fail
     )
   end
 
@@ -15,8 +18,8 @@ platform :ios do
       scheme: "MySimpleIosApp",
       clean: true,
       output_directory: "./build",
-      output_name: "MySimpleIosApp.ipa"
+      output_name: "MySimpleIosApp.ipa",
+      configuration: "Release"   # Ensures it's a proper release build
     )
   end
 end
-
