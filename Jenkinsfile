@@ -5,6 +5,7 @@ pipeline {
         APP_SCHEME = "MySimpleIosApp"
         APP_PROJECT = "MySimpleIosApp.xcodeproj"
         SIMULATOR_ID = "7D41B4B1-2119-48A5-9F5D-FC4334F2BD51"
+        RUBY_VERSION = "3.2.2"
     }
 
     stages {
@@ -18,8 +19,10 @@ pipeline {
             steps {
                 sh '''
                 set -e
-                echo "📌 Setting up Ruby & Bundler"
-                export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+                echo "📌 Using stable Ruby version"
+                export PATH="/opt/homebrew/opt/ruby@3.2/bin:$PATH"
+                export GEM_HOME="$HOME/.gem"
+                export PATH="$GEM_HOME/bin:$PATH"
 
                 echo "📌 Checking Ruby version"
                 ruby -v
@@ -69,7 +72,8 @@ pipeline {
     steps {
         sh '''
         echo "📌 Ensuring Jenkins uses correct Ruby version"
-        export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+        echo "📌 Using stable Ruby version"
+        export PATH="/opt/homebrew/opt/ruby@3.2/bin:$PATH"
         export GEM_HOME="$HOME/.gem"
         export PATH="$GEM_HOME/bin:$PATH"
         
