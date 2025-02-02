@@ -4,7 +4,7 @@ pipeline {
     environment {
         APP_SCHEME = "MySimpleIosApp"
         APP_PROJECT = "MySimpleIosApp.xcodeproj"
-        SIMULATOR_ID = "7D41B4B1-2119-48A5-9F5D-FC4334F2BD51"  // Ensure simulator UDID is set correctly
+        SIMULATOR_ID = "7D41B4B1-2119-48A5-9F5D-FC4334F2BD51"
     }
 
     stages {
@@ -21,7 +21,13 @@ pipeline {
                 ruby -v
                 which ruby
                 which bundler
+                
+                # Fix Fastlane & dependencies
                 gem install bundler --force
+                gem uninstall fastlane -a -x
+                gem install fastlane --no-document
+                gem install abbrev mutex_m highline commander
+                bundle update
                 bundle install
                 pod install
                 '''
@@ -58,7 +64,7 @@ pipeline {
 
         stage('Archive Artifacts') {
             steps {
-                sh 'mkdir -p build' // Ensure the folder exists
+                sh 'mkdir -p build'
                 archiveArtifacts artifacts: 'build/MySimpleIosApp.ipa', fingerprint: true
             }
         }
@@ -70,10 +76,7 @@ pipeline {
         }
         failure {
             echo "❌ Build Failed! Check logs for details."
-            sh '''
-            tail -n 50 /Users/vijayraghavan/.jenkins/logs/*
-            xcrun simctl list | grep "Booted"
-            '''
+            sh 'tail -n 50 /Users/vijayraghavan/.jenkins/logs/*'
         }
     }
 }
